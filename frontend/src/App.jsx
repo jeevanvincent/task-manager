@@ -3,7 +3,8 @@ import TaskBoard from './components/TaskBoard';
 import TaskForm from './components/TaskForm';
 import StatsBar from './components/StatsBar';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/tasks';
+// Set the base URL only (without appending routes here)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
@@ -11,10 +12,13 @@ export default function App() {
   const [filterPriority, setFilterPriority] = useState('');
   const [editingTask, setEditingTask] = useState(null);
 
+  // 1. Cleaned up the duplicate brackets here
   const fetchTasks = async () => {
     try {
-      let url = `${API_URL}?search=${search}`;
+      // Explicitly points to /api/tasks endpoint
+      let url = `${API_URL}/api/tasks?search=${search}`;
       if (filterPriority) url += `&priority=${filterPriority}`;
+      
       const res = await fetch(url);
       const data = await res.json();
       setTasks(data);
@@ -27,10 +31,12 @@ export default function App() {
     fetchTasks();
   }, [search, filterPriority]);
 
+  // 2. Added /api/tasks to both PUT and POST methods
   const handleSaveTask = async (taskData) => {
     try {
       if (editingTask) {
-        const res = await fetch(`${API_URL}/${editingTask._id}`, {
+        // Updated endpoint route for editing
+        const res = await fetch(`${API_URL}/api/tasks/${editingTask._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(taskData)
@@ -39,7 +45,8 @@ export default function App() {
         setTasks(tasks.map(t => t._id === updated._id ? updated : t));
         setEditingTask(null);
       } else {
-        const res = await fetch(API_URL, {
+        // Updated endpoint route for creating a task
+        const res = await fetch(`${API_URL}/api/tasks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(taskData)
@@ -52,18 +59,20 @@ export default function App() {
     }
   };
 
+  // 3. Added /api/tasks to the DELETE method
   const handleDeleteTask = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/tasks/${id}`, { method: 'DELETE' });
       setTasks(tasks.filter(t => t._id !== id));
     } catch (err) {
       console.error("Error deleting task:", err);
     }
   };
 
+  // 4. Added /api/tasks to the Status Change PUT method
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -71,7 +80,7 @@ export default function App() {
       const updated = await res.json();
       setTasks(tasks.map(t => t._id === id ? updated : t));
     } catch (err) {
-      console.error(err);
+      console.error("Error updating task status:", err);
     }
   };
 
